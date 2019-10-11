@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+
+<!-- Create a div where the graph will take place -->
+<div id="my_dataviz"></div>
+
+<!-- Color Scale -->
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+<script>
+
+    // set the dimensions and margins of the graph
+    var margin = {top: 10, right: 30, bottom: 40, left: 70},
+        width = 460 - margin.left - margin.right + 100,
+        height = 400 - margin.top - margin.bottom + 100;
+    
+    // append the svg object to the body of the page
+    var svg = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+    
+    //Read the data
+    d3.csv("ucsd_admission_lp.csv", function(data) {
+    
+        // List of groups (here I have one group per column)
+        var allGroup = data.columns.slice(1)
+
+    
+        // Reformat the data: we need an array of arrays of {x, y} tuples
+        var dataReady = allGroup.map( function(grpName) { // .map allows to do something for each element of the list
+          return {
+            name: grpName,
+            values: data.map(function(d) {
+              return {year: d.year, value: d[grpName]};
+            })
+          };
+        });
+        // I strongly advise to have a look to dataReady with
+      
+    
+        // A color scale: one color for each group
+        var myColor = d3.scaleOrdinal()
+          .domain(allGroup)
+          .range(d3.schemeSet2);
+        
+
+    
+        // Add X axis --> it is a date format
+        var x = d3.scaleBand()
+          .domain(data.map(function(d) { return d.year; }))
+          .range([ 0, width ]);
+        svg.append("g")
+          .attr("transform", "translate(0," + height + ")")
+          .call(d3.axisBottom(x));
+    
+        // Add Y axis
+        var y = d3.scaleLinear()
+          .domain( [0,55000])
+          .range([height,0]);
+        svg.append("g")
+          .call(d3.axisLeft(y));
+    
+        // Add the lines
+        var line = d3.line()
+          .x(function(d) { return x(d.year) })
+          .y(function(d) { return y(d.value) })
+        svg.selectAll("myLines")
+          .data(dataReady)
+          .enter()
+          .append("path")
+            .attr("d", function(d){ return line(d.values) } )
+            .attr("stroke", function(d){ return myColor(d.name) })
+            .style("stroke-width", 4)
+            .style("fill", "none")
+    
+        // Add the points
+        svg
+          // First we need to enter in a group
+          .selectAll("myDots")
+          .data(dataReady)
+          .enter()
+            .append('g')
+            .style("fill", function(d){ return myColor(d.name) })
+          // Second we need to enter in the 'values' part of this group
+          .selectAll("myPoints")
+          .data(function(d){ return d.values })
+          .enter()
+          .append("circle")
+            .attr("cx", function(d) { return x(d.year) } )
+            .attr("cy", function(d) { return y(d.value) } )
+            .attr("r", 5)
+            .attr("stroke", "white");
+          
+    
+          svg.append("text")
+            .attr("x", (width / 2))             
+            .attr("y", 0 - (margin.top / 2) + 15)
+            .attr("text-anchor", "middle")  
+            .style("font-size", "16px") 
+            .style("text-decoration", "underline")  
+            .text("UCSD Mens Admission Statistics From 2005-2018");
+
+            svg.append("text")
+            .attr("text-anchor", "end")
+            .attr("x", width - 230)
+            .attr("y", height + margin.top + 25 )
+            .text("Year ");
+
+        // Y axis label:
+        svg.append("text")
+            .attr("text-anchor", "end")
+            .attr("transform", "rotate(-90)")
+            .attr("y", -margin.left + 22)
+            .attr("x", -margin.top - 130)
+            .text("Number of People")
+        
+        svg.append("circle").attr("cx",270).attr("cy",70).attr("r", 6).style("fill", myColor(allGroup[0]))
+        svg.append("circle").attr("cx",270).attr("cy",100).attr("r", 6).style("fill", myColor(allGroup[1]))
+        svg.append("circle").attr("cx",270).attr("cy",130).attr("r", 6).style("fill", myColor(allGroup[2]))
+        svg.append("circle").attr("cx",270).attr("cy",160).attr("r", 6).style("fill", myColor(allGroup[3]))
+        svg.append("circle").attr("cx",270).attr("cy",190).attr("r", 6).style("fill", myColor(allGroup[4]))
+        svg.append("circle").attr("cx",270).attr("cy",220).attr("r", 6).style("fill", myColor(allGroup[5]))
+
+        svg.append("text").attr("x", 290).attr("y", 70).text(allGroup[0]).style("font-size", "15px").attr("alignment-baseline","middle")
+        svg.append("text").attr("x", 290).attr("y", 100).text(allGroup[1]).style("font-size", "15px").attr("alignment-baseline","middle")
+        svg.append("text").attr("x", 290).attr("y", 130).text(allGroup[2]).style("font-size", "15px").attr("alignment-baseline","middle")
+        svg.append("text").attr("x", 290).attr("y", 160).text(allGroup[3]).style("font-size", "15px").attr("alignment-baseline","middle")
+        svg.append("text").attr("x", 290).attr("y", 190).text(allGroup[4]).style("font-size", "15px").attr("alignment-baseline","middle")
+        svg.append("text").attr("x", 290).attr("y", 220).text(allGroup[5]).style("font-size", "15px").attr("alignment-baseline","middle")
+          
+    console.log(allGroup[5])
+    })
+    
+    
+    </script>
